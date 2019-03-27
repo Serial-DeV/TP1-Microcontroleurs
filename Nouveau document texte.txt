@@ -6,24 +6,45 @@ void write_data(char c);
 void print_LCD_char(char c);
 void print_LCD_String(char *s);
 void initLED();
-void configLED(char r, char g, char b, char a);
+void configLED(char b, char g, char r, char a);
+void print_LCD_int(int en);
+char* itoa(int i, char b[]);
 
 I2C i2c(I2C_SDA , I2C_SCL );
  
 int LCD_addr = 0x7C;
 int LED_addr = 0xC4;
+int i = 0;
+char*str;
+char ch[36];
  
 int main() {
     initLED();
-    configLED(0x00, 0xFF, 0x00, 0x00);
+    configLED(0x00, 0xFF, 0xFF, 0xFF);
     
     initLCD();
-    print_LCD_String("Hello world");
+    while(1){
+        wait(0.5);
+        write_command(0x01);
+        wait(0.00153);
+        write_command(0xC0);
+        if(i%5 == 0) configLED(0xFF, 0xFF, 0xFF, 0xFF);//Noir
+        else if(i%4 == 0) configLED(0x00, 0xFF, 0xFF, 0xFF);//Bleu
+        else if(i%3 == 0) configLED(0xFF, 0x00, 0xFF, 0xFF);//Vert
+        else if(i%2 == 0) configLED(0xFF, 0xFF, 0x00, 0xFF);//Rouge
+        else configLED(0x00, 0x00, 0x00, 0x00);//Blanc
+        str = itoa(i,ch);
+        print_LCD_String(str);
+        i++;
+        
+    }
+    
+    //print_LCD_String("Hello w80");
     //print_LCD_char(99);
 }
 
 void initLED(){
-    wait(0.04);
+    
     char cmd[3];
     wait(0.04);
     cmd[0] = 0x80;
@@ -33,14 +54,18 @@ void initLED(){
     cmd[0] = 0x08;
     cmd[1] = 0xAA;
     i2c.write(LED_addr, cmd, 2, false);
+    cmd[0] = 0x80;
+    cmd[1] = 0xAA;
+    i2c.write(LED_addr, cmd, 2, false);
 }
 
-void configLED(char r, char g, char b, char a){
+void configLED(char b, char g, char r, char a){
+    
     char cmd[5];
     cmd[0] = 0xA2;
-    cmd[1] = r;
+    cmd[1] = b;
     cmd[2] = g;
-    cmd[3] = b;
+    cmd[3] = r;
     cmd[4] = a;
     i2c.write(LED_addr, cmd, 5, false);
     
@@ -49,10 +74,8 @@ void configLED(char r, char g, char b, char a){
 
 void initLCD(){
     wait(0.04);
-    write_command(0x3C);
-    //wait(0.00004); inutile
-    write_command(0x0F);
-    //wait(0.00004);
+    write_command(0x3C);//4 pour mode 1 ligne(Celle du haut), C pour 2
+    write_command(0x0C);
     write_command(0x01);
     wait(0.0016);
     write_command(0x06);
@@ -64,7 +87,7 @@ void write_command(char c){
     char cmd[2];
     cmd[0] = 0x80;
     cmd[1] = c;
-    i2c.write(LCD_addr, cmd, 2, false);//false car répété
+    i2c.write(LCD_addr, cmd, 2, false);//false car rÃ©pÃ©tÃ©
 }
 
 void write_data(char c){
@@ -90,4 +113,24 @@ void print_LCD_String(char *s){
     
     
     i2c.write(LCD_addr, cmd, strlen(s)+1, false);
+}
+
+char* itoa(int i, char b[]){
+    char const digit[] = "0123456789";
+    char* p = b;
+    if(i<0){
+        *p++ = '-';
+        i *= -1;
+    }
+    int shifter = i;
+    do{
+        ++p;
+        shifter = shifter/10;
+    }while(shifter);
+    *p = '\0';
+    do{
+        *--p = digit[i%10];
+        i = i/10;
+    }while(i);
+    return b;
 }
