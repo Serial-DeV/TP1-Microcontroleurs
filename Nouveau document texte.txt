@@ -1,0 +1,62 @@
+#include "mbed.h"
+
+void initLCD();
+void write_command(char c);
+void write_data(char c);
+void print_LCD_char(char c);
+void print_LCD_String(char *s);
+
+I2C i2c(I2C_SDA , I2C_SCL );
+ 
+int LCD_addr = 0x7C;
+ 
+int main() {
+    initLCD();
+    print_LCD_String("Hello world");
+    //print_LCD_char(99);
+}
+
+void initLCD(){
+    wait(0.04);
+    write_command(0x3C);
+    //wait(0.00004);
+    write_command(0x0F);
+    //wait(0.00004);
+    write_command(0x01);
+    wait(0.0016);
+    write_command(0x06);
+    
+    
+}
+
+void write_command(char c){
+    char cmd[2];
+    cmd[0] = 0x80;
+    cmd[1] = c;
+    i2c.write(LCD_addr, cmd, 2, false);//false car répété
+}
+
+void write_data(char c){
+    char cmd[2];
+    cmd[0] = 0x40;
+    cmd[1] = c;
+    i2c.write(LCD_addr, cmd, 2, false);
+}
+
+void print_LCD_char(char c){
+    char cmd[2];
+    cmd[0] = 0x40;
+    cmd[1] = c;
+    i2c.write(LCD_addr, cmd, 2, false);
+}
+
+void print_LCD_String(char *s){
+    char cmd[36];
+    cmd[0] = 0x40;
+    for(int n = 1; n < strlen(s)+1; n++){
+        cmd[n] = s[n-1];
+    }
+    
+    
+    i2c.write(LCD_addr, cmd, strlen(s)+1, false);
+}
