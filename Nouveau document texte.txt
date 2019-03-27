@@ -5,21 +5,52 @@ void write_command(char c);
 void write_data(char c);
 void print_LCD_char(char c);
 void print_LCD_String(char *s);
+void initLED();
+void configLED(char r, char g, char b, char a);
 
 I2C i2c(I2C_SDA , I2C_SCL );
  
 int LCD_addr = 0x7C;
+int LED_addr = 0xC4;
  
 int main() {
+    initLED();
+    configLED(0x00, 0xFF, 0x00, 0x00);
+    
     initLCD();
     print_LCD_String("Hello world");
     //print_LCD_char(99);
 }
 
+void initLED(){
+    wait(0.04);
+    char cmd[3];
+    wait(0.04);
+    cmd[0] = 0x80;
+    cmd[1] = 0xFF;
+    cmd[2] = 0xFF;
+    i2c.write(LED_addr, cmd, 3, false);
+    cmd[0] = 0x08;
+    cmd[1] = 0xAA;
+    i2c.write(LED_addr, cmd, 2, false);
+}
+
+void configLED(char r, char g, char b, char a){
+    char cmd[5];
+    cmd[0] = 0xA2;
+    cmd[1] = r;
+    cmd[2] = g;
+    cmd[3] = b;
+    cmd[4] = a;
+    i2c.write(LED_addr, cmd, 5, false);
+    
+}
+    
+
 void initLCD(){
     wait(0.04);
     write_command(0x3C);
-    //wait(0.00004);
+    //wait(0.00004); inutile
     write_command(0x0F);
     //wait(0.00004);
     write_command(0x01);
